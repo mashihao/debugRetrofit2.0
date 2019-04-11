@@ -24,23 +24,26 @@ import java.lang.reflect.Type;
  * asynchronous calls this is a thread provided by OkHttp's dispatcher.
  */
 final class DefaultCallAdapterFactory extends CallAdapter.Factory {
-  static final CallAdapter.Factory INSTANCE = new DefaultCallAdapterFactory();
+    static final CallAdapter.Factory INSTANCE = new DefaultCallAdapterFactory();
 
-  @Override
-  public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
-    if (getRawType(returnType) != Call.class) {
-      return null;
+    @Override
+    public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
+        // 默认返回类型必须是 用 call 包裹的  Call<Response>
+        if (getRawType(returnType) != Call.class) {
+            return null;
+        }
+
+        final Type responseType = Utils.getCallResponseType(returnType);
+        return new CallAdapter<Call<?>>() {
+            @Override
+            public Type responseType() {
+                return responseType;
+            }
+
+            @Override
+            public <R> Call<R> adapt(Call<R> call) {
+                return call;
+            }
+        };
     }
-
-    final Type responseType = Utils.getCallResponseType(returnType);
-    return new CallAdapter<Call<?>>() {
-      @Override public Type responseType() {
-        return responseType;
-      }
-
-      @Override public <R> Call<R> adapt(Call<R> call) {
-        return call;
-      }
-    };
-  }
 }
