@@ -175,10 +175,12 @@ final class ServiceMethod<T> {
             }
             responseConverter = createResponseConverter();
 
+            // 解析接口上所有的注解
             for (Annotation annotation : methodAnnotations) {
                 parseMethodAnnotation(annotation);
             }
 
+            // 必须写一个请求方式  POST/GET
             if (httpMethod == null) {
                 throw methodError("HTTP method annotation is required (e.g., @GET, @POST, etc.).");
             }
@@ -195,6 +197,7 @@ final class ServiceMethod<T> {
             }
 
             int parameterCount = parameterAnnotationsArray.length;
+            // 生成参数解析器
             parameterHandlers = new ParameterHandler<?>[parameterCount];
             for (int p = 0; p < parameterCount; p++) {
                 Type parameterType = parameterTypes[p];
@@ -244,7 +247,7 @@ final class ServiceMethod<T> {
             }
         }
 
-        // 解析注解，请求方式
+        // 解析注解，通过 GET/POST 请求方式
         private void parseMethodAnnotation(Annotation annotation) {
             if (annotation instanceof DELETE) {
                 parseHttpMethodAndPath("DELETE", ((DELETE) annotation).value(), false);
@@ -285,7 +288,16 @@ final class ServiceMethod<T> {
             }
         }
 
+        // 获取注解当中的 url 信息
         private void parseHttpMethodAndPath(String httpMethod, String value, boolean hasBody) {
+
+            // 一个请求 只允许有一个 POST / GET  不允许下面情况
+//            @POST("/repos/{owner}/{repo}/contributors")
+//            @GET("/repos/{owner}/{repo}/contributors")
+//            Call<List<Contributor>> contributors(
+//                    @Path("owner") String owner,
+//                    @Path("repo") String repo);
+
             if (this.httpMethod != null) {
                 throw methodError("Only one HTTP method is allowed. Found: %s and %s.",
                         this.httpMethod, httpMethod);
